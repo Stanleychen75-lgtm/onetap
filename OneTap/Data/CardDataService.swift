@@ -77,7 +77,7 @@ enum AppEnvironment {
     /// set, so same-Wi-Fi testing keeps working out of the box.
     /// • iOS Simulator or same-Wi-Fi device: this LAN IP.
     /// • Production: your deployed HTTPS URL.
-    static let defaultBackendURL = URL(string: "http://10.0.130.233:8080")!
+    static let defaultBackendURL = URL(string: "https://onetap-8no5.onrender.com")!
 
     /// UserDefaults key for an optional runtime override set in the Debug screen. Paste a
     /// public tunnel URL (e.g. https://xxx.trycloudflare.com) to test on mobile data WITHOUT

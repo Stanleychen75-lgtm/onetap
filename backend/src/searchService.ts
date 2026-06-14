@@ -21,6 +21,16 @@ const SOLD_LIMIT = 24;
 
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+// Light, card-aware ranking nudge: among equally-relevant titles, prefer ones with collector
+// signals (grade, rookie, numbered, year, popular set/parallel terms). The category fence
+// already guarantees results are cards — this is a quality tiebreak, NOT a filter, so it
+// never hides anything.
+const CARD_SIGNALS =
+  /\b(psa|bgs|cgc|sgc|rookie|rc|auto|patch|refractor|prizm|holo|sapphire|numbered|1st\s*ed(?:ition)?)\b|#?\d{1,3}\/\d{1,4}|\b(?:19|20)\d{2}\b/i;
+function cardSignalBoost(title: string): number {
+  return CARD_SIGNALS.test(title) ? 0.5 : 0;
+}
+
 /**
  * Layered fallback + merge + dedupe + rank.
  *
@@ -55,7 +65,11 @@ async function gather(
   if (byId.size === 0 && firstError) throw firstError;
 
   return [...byId.values()]
-    .sort((a, b) => score(b.title, nq) - score(a.title, nq))
+    .sort(
+      (a, b) =>
+        (score(b.title, nq) + cardSignalBoost(b.title)) -
+        (score(a.title, nq) + cardSignalBoost(a.title)),
+    )
     .slice(0, limit);
 }
 

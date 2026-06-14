@@ -1,30 +1,20 @@
 import SwiftUI
-import PhotosUI
 
-/// Home screen: a big search field, a photo-scan entry, curated examples, and recents.
-/// The single entry point into the app.
+/// Home screen: a big search field, curated examples, and recents.
+/// The single entry point into the app. (Photo scan was removed in v1 — text search is
+/// reliable and matches the 130point experience; a dependable card-recognition scan can
+/// return later once it's backed by real recognition rather than a tiny on-device index.)
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     @State private var path = NavigationPath()
     @State private var showDebug = false
-
-    // Photo-scan flow state
-    @State private var showScanOptions = false
-    @State private var showCamera = false
-    @State private var showLibrary = false
-    @State private var libraryItem: PhotosPickerItem?
-    @State private var capturedImage: UIImage?     // temp holder while camera dismisses
-    @State private var scan: ScanImage?            // drives the review sheet
 
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.xl) {
                     header
-                    VStack(spacing: Theme.Space.md) {
-                        SearchField(text: $viewModel.searchText, onSubmit: submit)
-                        scanButton
-                    }
+                    SearchField(text: $viewModel.searchText, onSubmit: submit)
                     trendingSection
                     mostPopularSection
                     moreCategoriesSection
@@ -36,43 +26,6 @@ struct SearchView: View {
             .background(Theme.background.ignoresSafeArea())
             .navigationDestination(for: SearchQuery.self) { query in
                 ResultsView(query: query.text)
-            }
-            .confirmationDialog("Scan a card", isPresented: $showScanOptions, titleVisibility: .visible) {
-                if CameraPicker.isAvailable {
-                    Button("Take Photo") { showCamera = true }
-                }
-                Button("Choose from Library") { showLibrary = true }
-                Button("Cancel", role: .cancel) {}
-            }
-            .fullScreenCover(isPresented: $showCamera, onDismiss: presentReviewFromCamera) {
-                CameraPicker { image in capturedImage = image }
-                    .ignoresSafeArea()
-            }
-            .photosPicker(isPresented: $showLibrary, selection: $libraryItem, matching: .images)
-            .onChange(of: libraryItem) { _, newItem in
-                guard let newItem else { return }
-                Task {
-                    let data = try? await newItem.loadTransferable(type: Data.self)
-                    await MainActor.run {
-                        if let data, let image = UIImage(data: data) {
-                            scan = ScanImage(image: image)
-                        }
-                        libraryItem = nil
-                    }
-                }
-            }
-            .sheet(item: $scan) { item in
-                ScanReviewView(
-                    image: item.image,
-                    onSearch: { query in
-                        scan = nil
-                        run(query)
-                    },
-                    onRetake: {
-                        scan = nil
-                        showScanOptions = true
-                    }
-                )
             }
         }
         .tint(Theme.accent)
@@ -226,20 +179,6 @@ struct SearchView: View {
         }
     }
 
-    private var scanButton: some View {
-        Button { showScanOptions = true } label: {
-            HStack(spacing: Theme.Space.sm) {
-                Image(systemName: "camera.viewfinder").font(.system(size: 16, weight: .semibold))
-                Text("Scan a card").font(.system(size: 15, weight: .semibold))
-            }
-            .foregroundStyle(Theme.onAccent)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(Theme.accent, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 12, weight: .bold))
@@ -259,19 +198,6 @@ struct SearchView: View {
         viewModel.searchText = query.trimmed
         path.append(query)
     }
-
-    private func presentReviewFromCamera() {
-        if let image = capturedImage {
-            capturedImage = nil
-            scan = ScanImage(image: image)
-        }
-    }
-}
-
-/// Wrapper so a captured/picked image can drive an item-based review sheet.
-private struct ScanImage: Identifiable {
-    let id = UUID()
-    let image: UIImage
 }
 
 #Preview {

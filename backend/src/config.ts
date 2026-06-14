@@ -48,6 +48,16 @@ export const config = {
     apiBaseUrl:
       env.EBAY_ENV === "sandbox" ? "https://api.sandbox.ebay.com" : "https://api.ebay.com",
     marketplaceInsightsEnabled: bool(env.EBAY_MARKETPLACE_INSIGHTS_ENABLED, false),
+    // Trading-card category fence (v1.1). Browse allows only ONE category_id per request,
+    // so the active provider queries each in parallel and merges. IDs confirmed via eBay's
+    // Taxonomy API (EBAY_US tree):
+    //   261328 = Trading Card Singles (sports), 183454 = CCG Individual Cards (Pokémon/MTG/YGO).
+    // Override with CARD_CATEGORY_IDS (comma-separated) — toggle-ready for a future category
+    // picker. Set to empty to disable the fence (search all of eBay again).
+    cardCategoryIds: (env.CARD_CATEGORY_IDS ?? "261328,183454")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
   },
 };
 

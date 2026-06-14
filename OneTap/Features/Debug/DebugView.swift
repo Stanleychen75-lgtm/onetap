@@ -105,7 +105,7 @@ struct DebugView: View {
                             .fixedSize(horizontal: false, vertical: true)
                         Text(AppEnvironment.isUsingBackendOverride
                              ? "source: Debug override ✓"
-                             : "source: Wi-Fi default (no override set)")
+                             : "source: default — hosted backend (no override set)")
                             .font(.system(size: 11))
                             .foregroundStyle(AppEnvironment.isUsingBackendOverride ? Theme.sold : .orange)
                     }
@@ -126,10 +126,10 @@ struct DebugView: View {
                         .buttonStyle(.borderless)
                         .font(.system(size: 14, weight: .semibold))
                         .disabled(viewModel.overrideURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    Button("Reset to Wi-Fi default", role: .destructive) { viewModel.clearOverride() }
+                    Button("Reset to default", role: .destructive) { viewModel.clearOverride() }
                         .buttonStyle(.borderless)
                         .font(.system(size: 14, weight: .semibold))
-                    Text("Paste your Cloudflare tunnel URL to test on cellular, then tap “Use this URL”. Clear it to use the local Wi-Fi default (\(AppEnvironment.defaultBackendURL.absoluteString)).")
+                    Text("Override the backend URL for testing (e.g. a local dev server), then tap “Use this URL”. Clear it to use the default: \(AppEnvironment.defaultBackendURL.absoluteString).")
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.textTertiary)
                 }
