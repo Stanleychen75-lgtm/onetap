@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Build products
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# Local screenshots (remove this line if you want to commit them)
+screenshots/

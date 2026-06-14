@@ -1,0 +1,8 @@
+node_modules/
+.env
+dist/
+*.log
+.DS_Store
+# Local-only Cloudflare tunnel binary (37MB) — re-downloaded by setup, never commit.
+cloudflared
+cloudflared.tgz

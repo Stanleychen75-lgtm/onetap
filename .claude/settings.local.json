@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild -version)",
+      "Bash(swift --version)",
+      "Bash(xcrun simctl *)",
+      "Bash(ruby -v)",
+      "Bash(gem list *)",
+      "Bash(xcodebuild -list -project OneTap.xcodeproj)",
+      "Bash(open -a Simulator)",
+      "Bash(xcodebuild -project OneTap.xcodeproj -scheme OneTap -destination 'platform=iOS Simulator,name=iPhone 17' -configuration Debug build CODE_SIGNING_ALLOWED=NO)",
+      "Bash(cp /tmp/onetap_home.png \"/Users/stanleychen/Desktop/one tap/screenshots/01-search.png\")",
+      "Bash(cp /tmp/onetap_results.png \"/Users/stanleychen/Desktop/one tap/screenshots/02-results.png\")",
+      "Bash(node -v)",
+      "Bash(npm -v)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/stanleychen/.nvm/versions/**)",
+      "Read(//Users/stanleychen/.volta/bin/**)",
+      "Bash(zsh -lic 'which node; node -v')"
+    ]
+  }
+}
