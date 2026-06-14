@@ -29,7 +29,7 @@ export class EbayActiveProvider implements ActiveListingsProvider {
   readonly source = "eBay Browse API";
   readonly live = true;
 
-  async fetchActive(query: string): Promise<Listing[]> {
+  async fetchActive(query: string, marketplaceId?: string): Promise<Listing[]> {
     // Trading-card fence: eBay Browse allows only ONE category_id per request, so we query
     // each configured card category in PARALLEL and merge — keeping results card-only at
     // roughly one call's latency. If no categories are configured, fall back to a single
@@ -42,12 +42,12 @@ export class EbayActiveProvider implements ActiveListingsProvider {
     let refreshed = false;
 
     const fetchCategory = async (categoryId?: string): Promise<Response> => {
-      let res = await this.call(query, token, categoryId);
+      let res = await this.call(query, token, categoryId, marketplaceId);
       // Token expired/invalidated early → refresh ONCE (shared across the parallel calls).
       if (res.status === 401 && !refreshed) {
         refreshed = true;
         token = await getEbayAppToken(true);
-        res = await this.call(query, token, categoryId);
+        res = await this.call(query, token, categoryId, marketplaceId);
       }
       return res;
     };
@@ -74,7 +74,7 @@ export class EbayActiveProvider implements ActiveListingsProvider {
     return [...byId.values()];
   }
 
-  private call(query: string, token: string, categoryId?: string): Promise<Response> {
+  private call(query: string, token: string, categoryId?: string, marketplaceId?: string): Promise<Response> {
     const url = new URL(`${config.ebay.apiBaseUrl}/buy/browse/v1/item_summary/search`);
     url.searchParams.set("q", query);
     if (categoryId) url.searchParams.set("category_ids", categoryId); // ← trading-card fence
@@ -82,7 +82,8 @@ export class EbayActiveProvider implements ActiveListingsProvider {
     return fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "X-EBAY-C-MARKETPLACE-ID": config.ebay.marketplaceId,
+        // Per-request marketplace → native listings + native currency (no FX conversion).
+        "X-EBAY-C-MARKETPLACE-ID": marketplaceId ?? config.ebay.marketplaceId,
         Accept: "application/json",
       },
       signal: AbortSignal.timeout(config.requestTimeoutMs),

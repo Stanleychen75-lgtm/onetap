@@ -73,9 +73,10 @@ async function gather(
     .slice(0, limit);
 }
 
-export async function runSearch(rawQuery: string, providedVariants?: string[]): Promise<CardSearchResult> {
+export async function runSearch(rawQuery: string, providedVariants?: string[], marketplaceId?: string): Promise<CardSearchResult> {
   const query = rawQuery.trim();
-  const cacheKey = query.toLowerCase();
+  // Marketplace is part of the cache key — US (USD) and GB (GBP) results must not be shared.
+  const cacheKey = `${marketplaceId ?? config.ebay.marketplaceId}:${query.toLowerCase()}`;
 
   const cached = cache.get(cacheKey);
   if (cached) {
@@ -93,7 +94,7 @@ export async function runSearch(rawQuery: string, providedVariants?: string[]): 
   let activeSource = activeProvider.source;
   let activeLive = activeProvider.live;
   try {
-    active = await gather((q) => activeProvider.fetchActive(q), tries, nq, config.activeLimit, activeProvider.live);
+    active = await gather((q) => activeProvider.fetchActive(q, marketplaceId), tries, nq, config.activeLimit, activeProvider.live);
   } catch (err) {
     notes.push(`Active: live fetch failed, served sample data instead (${errMsg(err)}).`);
     active = await gather((q) => sampleActiveFallback.fetchActive(q), tries, nq, config.activeLimit, false);

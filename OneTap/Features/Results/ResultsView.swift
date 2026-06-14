@@ -71,7 +71,9 @@ struct ResultsView: View {
     /// verified-real (`meta.live.sold`); otherwise we show a count + price range of the
     /// listings actually displayed — never a misleading average built from sample data.
     private func summaryLine(_ result: CardSearchResult) -> some View {
-        let code = result.stats.currencyCode
+        // Display currency comes from the shown (live) listings — they carry the marketplace's
+        // native currency; stats may still be USD from sample sold, so don't use it here.
+        let code = viewModel.listings.first?.currencyCode ?? result.stats.currencyCode
         let prices = viewModel.listings.map(\.price)   // only what's actually shown
         let range = (prices.min().map { Listing.currency($0, code: code) } ?? "—")
             + "–" + (prices.max().map { Listing.currency($0, code: code) } ?? "—")

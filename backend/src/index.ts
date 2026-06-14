@@ -53,7 +53,7 @@ app.get("/health", async () => ({
 }));
 
 app.get("/search", async (req, reply) => {
-  const params = req.query as { q?: string; variants?: string };
+  const params = req.query as { q?: string; variants?: string; marketplace?: string };
   const q = (params.q ?? "").trim();
   if (q.length < 2) {
     return reply.code(400).send({ error: "Query parameter 'q' must be at least 2 characters." });
@@ -61,8 +61,12 @@ app.get("/search", async (req, reply) => {
   const variants = params.variants
     ? params.variants.split("|").map((s) => s.trim()).filter(Boolean)
     : undefined;
+  // Validate the optional marketplace against the allowlist; fall back to the default.
+  const marketplace = config.ebay.supportedMarketplaces.includes(params.marketplace ?? "")
+    ? params.marketplace
+    : config.ebay.marketplaceId;
   try {
-    return await runSearch(q, variants);
+    return await runSearch(q, variants, marketplace);
   } catch (err) {
     req.log.error(err);
     return reply.code(502).send({

@@ -58,6 +58,10 @@ export const config = {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
+    // Marketplaces the app may switch between. Each returns its own listings in its native
+    // currency (no FX conversion) and shares the same card category IDs (verified live).
+    // Used to validate the per-request `marketplace` param; anything else → marketplaceId.
+    supportedMarketplaces: ["EBAY_US", "EBAY_GB", "EBAY_AU", "EBAY_CA", "EBAY_DE"],
   },
 };
 

@@ -108,6 +108,18 @@ enum AppEnvironment {
 
     static var isSampleMode: Bool { dataMode == .sample }
 
+    /// The eBay marketplace the user is browsing — sets native listings + native currency
+    /// (no FX conversion). Persisted in UserDefaults; chosen in Settings; read per request.
+    static let marketplaceKey = "selectedMarketplace"
+    static var selectedMarketplace: EbayMarketplace {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: marketplaceKey),
+               let m = EbayMarketplace(rawValue: raw) { return m }
+            return .default
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: marketplaceKey) }
+    }
+
     static func makeCardDataService() -> CardDataService {
         switch dataMode {
         case .sample:

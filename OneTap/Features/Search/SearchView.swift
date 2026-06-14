@@ -8,6 +8,7 @@ struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     @State private var path = NavigationPath()
     @State private var showDebug = false
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -35,9 +36,17 @@ struct SearchView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: Theme.Space.sm) {
+            HStack(spacing: Theme.Space.md) {
                 OneTapLogo(size: 26)
                 Spacer()
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Settings")
+                .sheet(isPresented: $showSettings) { SettingsView() }
                 #if DEBUG
                 Button { showDebug = true } label: {
                     Image(systemName: "ladybug.fill")

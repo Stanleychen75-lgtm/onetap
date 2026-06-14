@@ -6,7 +6,7 @@ export interface ActiveListingsProvider {
   readonly source: string;
   /** Whether this provider returns real marketplace data (vs sample). */
   readonly live: boolean;
-  fetchActive(query: string): Promise<Listing[]>;
+  fetchActive(query: string, marketplaceId?: string): Promise<Listing[]>;
 }
 
 /** Source of completed/sold listings. */

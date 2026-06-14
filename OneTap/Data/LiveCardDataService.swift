@@ -45,6 +45,8 @@ final class LiveCardDataService: CardDataService {
         components?.queryItems = [
             URLQueryItem(name: "q", value: nq.cleaned.isEmpty ? query : nq.cleaned),
             URLQueryItem(name: "variants", value: variants.joined(separator: "|")),
+            // Native listings + currency for the user's chosen marketplace (read per request).
+            URLQueryItem(name: "marketplace", value: AppEnvironment.selectedMarketplace.apiID),
         ]
         guard let url = components?.url else { throw DataError.notConfigured }
 
