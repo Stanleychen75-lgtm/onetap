@@ -8,7 +8,7 @@ struct ListingRowView: View {
 
     var body: some View {
         HStack(spacing: Theme.Space.md) {
-            AsyncCardImage(url: listing.imageURL)
+            AsyncCardImage(url: listing.safeImageURL)
                 .frame(width: 56, height: 76)
 
             VStack(alignment: .leading, spacing: 6) {

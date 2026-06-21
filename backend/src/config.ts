@@ -36,8 +36,19 @@ export const config = {
   port: num(env.PORT, 8080),
   host: env.HOST ?? "0.0.0.0",
   apiKey: env.API_KEY || null,
+  // Safety interlock: the server refuses to start without an API_KEY unless this is
+  // explicitly set. Prevents accidentally deploying an OPEN public backend (which would
+  // let anyone burn the eBay quota). Local dev sets ALLOW_UNAUTHENTICATED=1 in .env.
+  allowUnauthenticated: bool(env.ALLOW_UNAUTHENTICATED, false),
   cacheTtlSeconds: num(env.CACHE_TTL_SECONDS, 300),
-  activeLimit: num(env.ACTIVE_LISTINGS_LIMIT, 12),
+  // Hard cap on cached search entries so the in-memory cache can't grow without bound.
+  cacheMaxEntries: num(env.CACHE_MAX_ENTRIES, 500),
+  // Page size: how many active listings the first /search response returns, and how many
+  // each "load more" page adds. (Was 12 — raised so broad queries surface a full first page.)
+  activeLimit: num(env.ACTIVE_LISTINGS_LIMIT, 50),
+  // Ceiling on the full ranked active pool that /search builds once, caches, and paginates
+  // over. Must be >= the max total the app pages to (>=130). eBay Browse allows <=200/request.
+  activeMaxResults: num(env.ACTIVE_MAX_RESULTS, 150),
   requestTimeoutMs: num(env.REQUEST_TIMEOUT_MS, 8000),
   rateLimitPerMinute: num(env.RATE_LIMIT_PER_MINUTE, 60),
   ebay: {

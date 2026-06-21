@@ -5,7 +5,18 @@ import Foundation
 /// Every screen talks to this protocol and nothing else. Swapping sample data for a
 /// real backend is a one-line change in `AppEnvironment` — no UI code changes.
 protocol CardDataService {
-    func search(query: String) async throws -> CardSearchResult
+    /// `page` is 1-based. Page 1 returns the first page of active listings (~50); later pages
+    /// return the next window of the same ranked result set, for "load more". Sold/stats are
+    /// the same on every page — the UI reads them from page 1 and appends only `active`.
+    func search(query: String, page: Int) async throws -> CardSearchResult
+}
+
+extension CardDataService {
+    /// Convenience for callers that only need the first page (e.g. the self-test and the
+    /// Phase 2 lab). Keeps every existing `search(query:)` call site working unchanged.
+    func search(query: String) async throws -> CardSearchResult {
+        try await search(query: query, page: 1)
+    }
 }
 
 /// Honest, user-facing errors. The error states in the UI read straight from these,

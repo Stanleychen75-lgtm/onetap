@@ -17,6 +17,13 @@ final class ResultsViewModel: ObservableObject {
     @Published private(set) var relatedMatches: [String] = []
     @Published var filters = ResultFilters()
 
+    /// Pagination: active listings accumulated across pages, and whether a "load more" is
+    /// available / in flight. Sold listings come from page 1 only and don't paginate.
+    @Published private(set) var canLoadMore = false
+    @Published private(set) var isLoadingMore = false
+    private var pagedActive: [Listing] = []
+    private var page = 1
+
     let query: String
     private let service: CardDataService
 
@@ -63,27 +70,32 @@ final class ResultsViewModel: ObservableObject {
         guard let result else { return [] }
         let scoped: [Listing]
         switch filters.scope {
-        case .both:   scoped = result.active + (showsSold ? result.sold : [])
+        case .both:   scoped = pagedActive + (showsSold ? result.sold : [])
         case .sold:   scoped = showsSold ? result.sold : []
-        case .active: scoped = result.active
+        case .active: scoped = pagedActive
         }
         return filters.apply(to: scoped, query: query)
     }
 
     var lowestActivePrice: Double? {
-        result?.active.map(\.price).min()
+        pagedActive.map(\.price).min()
     }
 
     func load() async {
         state = .loading
         didYouMean = []
         relatedMatches = []
+        page = 1
+        pagedActive = []
+        canLoadMore = false
         do {
-            let result = try await service.search(query: query)
+            let result = try await service.search(query: query, page: 1)
             if result.isEmpty {
                 state = .empty
                 didYouMean = suggestions()
             } else {
+                pagedActive = result.active
+                canLoadMore = result.meta?.hasMore == true
                 state = .loaded(result)
                 relatedMatches = AppEnvironment.isSampleMode
                     ? SampleCardIndex.shared.relatedNames(for: query, excluding: result.cardName)
@@ -99,6 +111,23 @@ final class ResultsViewModel: ObservableObject {
             }
         } catch {
             state = .failed(.network(underlying: error))
+        }
+    }
+
+    /// Fetch the next page and append its active listings (deduped by id). On any error we
+    /// simply stop offering "load more" and keep what's already shown — never break the screen.
+    func loadMore() async {
+        guard canLoadMore, !isLoadingMore, case .loaded = state else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        do {
+            let next = try await service.search(query: query, page: page + 1)
+            page += 1
+            let seen = Set(pagedActive.map(\.id))
+            pagedActive.append(contentsOf: next.active.filter { !seen.contains($0.id) })
+            canLoadMore = next.meta?.hasMore == true
+        } catch {
+            canLoadMore = false
         }
     }
 

@@ -78,7 +78,9 @@ export class EbayActiveProvider implements ActiveListingsProvider {
     const url = new URL(`${config.ebay.apiBaseUrl}/buy/browse/v1/item_summary/search`);
     url.searchParams.set("q", query);
     if (categoryId) url.searchParams.set("category_ids", categoryId); // ← trading-card fence
-    url.searchParams.set("limit", String(config.activeLimit));
+    // Fetch enough per category to fill the full ranked pool (merged across categories +
+    // query variants, then deduped/ranked/paginated server-side). eBay Browse caps limit at 200.
+    url.searchParams.set("limit", String(Math.min(config.activeMaxResults, 200)));
     return fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,

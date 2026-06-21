@@ -16,10 +16,21 @@ const soldProvider = makeSoldProvider();
 const sampleActiveFallback = new SampleActiveProvider();
 const mockSoldFallback = new MockSoldProvider();
 
-const cache = new TtlCache<CardSearchResult>(config.cacheTtlSeconds * 1000);
+const cache = new TtlCache<CardSearchResult>(config.cacheTtlSeconds * 1000, config.cacheMaxEntries);
 const SOLD_LIMIT = 24;
+// Upper bound on query variants fanned out per request. Actual eBay Browse calls are at most
+// MAX_VARIANTS × cardCategoryIds.length (early-exit once the pool fills), so the per-request
+// provider fan-out stays small and bounded regardless of client input.
+const MAX_VARIANTS = 6;
 
-const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+/**
+ * Minimal server-side logger (structurally compatible with Fastify's `req.log`). The route
+ * passes its request logger in so upstream/eBay error detail is recorded server-side instead
+ * of being echoed to clients via meta.notes (see catch blocks below).
+ */
+interface RequestLogger {
+  error(obj: unknown, msg?: string): void;
+}
 
 // Light, card-aware ranking nudge: among equally-relevant titles, prefer ones with collector
 // signals (grade, rookie, numbered, year, popular set/parallel terms). The category fence
@@ -73,7 +84,7 @@ async function gather(
     .slice(0, limit);
 }
 
-export async function runSearch(rawQuery: string, providedVariants?: string[], marketplaceId?: string): Promise<CardSearchResult> {
+export async function runSearch(rawQuery: string, providedVariants?: string[], marketplaceId?: string, logger?: RequestLogger): Promise<CardSearchResult> {
   const query = rawQuery.trim();
   // Marketplace is part of the cache key — US (USD) and GB (GBP) results must not be shared.
   const cacheKey = `${marketplaceId ?? config.ebay.marketplaceId}:${query.toLowerCase()}`;
@@ -84,7 +95,12 @@ export async function runSearch(rawQuery: string, providedVariants?: string[], m
   }
 
   const nq = normalize(query);
-  const planned = (providedVariants?.length ? providedVariants : variantsFor(nq)).filter((v) => v.length >= 2);
+  // Variants are derived server-side from the query (see /search — client-supplied variants
+  // are no longer trusted, so they can't poison the cache or amplify provider calls). The
+  // optional `providedVariants` arg is kept for internal callers/tests but is capped + filtered.
+  const planned = (providedVariants?.length ? providedVariants : variantsFor(nq))
+    .filter((v) => v.length >= 2)
+    .slice(0, MAX_VARIANTS);
   const tries = planned.length ? planned : [query];
 
   const notes: string[] = [];
@@ -94,10 +110,15 @@ export async function runSearch(rawQuery: string, providedVariants?: string[], m
   let activeSource = activeProvider.source;
   let activeLive = activeProvider.live;
   try {
-    active = await gather((q) => activeProvider.fetchActive(q, marketplaceId), tries, nq, config.activeLimit, activeProvider.live);
+    // Build the FULL ranked pool (up to activeMaxResults). The /search route paginates this
+    // cached pool into pages of config.activeLimit — so "load more" costs zero extra eBay calls.
+    active = await gather((q) => activeProvider.fetchActive(q, marketplaceId), tries, nq, config.activeMaxResults, activeProvider.live);
   } catch (err) {
-    notes.push(`Active: live fetch failed, served sample data instead (${errMsg(err)}).`);
-    active = await gather((q) => sampleActiveFallback.fetchActive(q), tries, nq, config.activeLimit, false);
+    // Keep upstream detail in SERVER logs only; the client-facing note stays generic so raw
+    // eBay error text is never echoed back on the /search response (defense-in-depth).
+    logger?.error({ err }, "Active: live fetch failed — serving sample data");
+    notes.push("Active: live fetch failed — served sample data instead.");
+    active = await gather((q) => sampleActiveFallback.fetchActive(q), tries, nq, config.activeMaxResults, false);
     activeSource = "Sample data (eBay unavailable)";
     activeLive = false;
   }
@@ -109,7 +130,8 @@ export async function runSearch(rawQuery: string, providedVariants?: string[], m
   try {
     sold = await gather((q) => soldProvider.fetchSold(q), tries, nq, SOLD_LIMIT, soldProvider.live);
   } catch (err) {
-    notes.push(`Sold: live provider unavailable, served sample data instead (${errMsg(err)}).`);
+    logger?.error({ err }, "Sold: live provider unavailable — serving sample data");
+    notes.push("Sold: live provider unavailable — served sample data instead.");
     sold = await gather((q) => mockSoldFallback.fetchSold(q), tries, nq, SOLD_LIMIT, false);
     soldSource = "Sample data";
     soldLive = false;

@@ -28,25 +28,26 @@ final class LiveCardDataService: CardDataService {
         self.session = session
     }
 
-    func search(query: String) async throws -> CardSearchResult {
+    func search(query: String, page: Int) async throws -> CardSearchResult {
         // Guard against shipping with the placeholder host still in place.
         if baseURL.host?.contains("example.com") ?? true {
             throw DataError.notConfigured
         }
 
-        // Use the shared SearchEngine to pass the backend both a normalized primary query
-        // and ordered fallback variants (full → important tokens → name → surname). The
-        // backend tries them against eBay in order and merges/dedupes/ranks the results —
-        // see backend/src/searchService.ts. Same search brain as sample mode.
+        // Normalize the query with the shared SearchEngine and send the cleaned form. The
+        // backend derives its own fallback variants server-side (full → tokens → name →
+        // surname) and merges/dedupes/ranks — see backend/src/searchService.ts. Variants are
+        // intentionally NOT sent by the client, so a caller can't poison the shared cache or
+        // amplify eBay calls; the backend is the single source of truth for the variant plan.
         let nq = SearchEngine.normalize(query)
-        let variants = SearchEngine.variants(nq)
         var components = URLComponents(url: baseURL.appendingPathComponent("search"),
                                        resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "q", value: nq.cleaned.isEmpty ? query : nq.cleaned),
-            URLQueryItem(name: "variants", value: variants.joined(separator: "|")),
             // Native listings + currency for the user's chosen marketplace (read per request).
             URLQueryItem(name: "marketplace", value: AppEnvironment.selectedMarketplace.apiID),
+            // 1-based page; the backend pages its ranked pool (server sets the page size).
+            URLQueryItem(name: "page", value: String(max(1, page))),
         ]
         guard let url = components?.url else { throw DataError.notConfigured }
 

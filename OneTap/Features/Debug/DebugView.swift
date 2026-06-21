@@ -1,5 +1,7 @@
 import SwiftUI
 
+#if DEBUG
+
 /// Lightweight developer/test screen (reachable only from the DEBUG ladybug button on the
 /// home screen). Shows the active configuration, runs a one-tap self-test across every
 /// sample query, and can ping the backend's /health. Not shipped to users.
@@ -176,6 +178,17 @@ struct DebugView: View {
                         .font(.system(size: 11))
                         .foregroundStyle(Theme.textTertiary)
                 }
+
+                Section("Phase 2 prototype") {
+                    NavigationLink {
+                        VisualRerankLabView()
+                    } label: {
+                        Label("Visual re-rank lab", systemImage: "square.stack.3d.up")
+                    }
+                    Text("Measures on-device visual re-ranking of search results by image similarity. Real device only — feature prints need the Neural Engine.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.textTertiary)
+                }
             }
             .navigationTitle("Developer")
             .navigationBarTitleDisplayMode(.inline)
@@ -198,3 +211,5 @@ struct DebugView: View {
         }
     }
 }
+
+#endif

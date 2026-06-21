@@ -24,6 +24,11 @@ struct SearchMeta: Codable, Hashable {
     var sources: Sources
     var live: LiveFlags
     var notes: [String]?
+    /// Pagination over the ranked active pool. `activeTotal` is the full pool size and
+    /// `hasMore` is true when more active pages remain — used to drive "Show more results".
+    /// Optional (nil for sample/older responses), so decoding stays backward-compatible.
+    var activeTotal: Int? = nil
+    var hasMore: Bool? = nil
 
     /// The meta the local mock service stamps onto sample results.
     static let sample = SearchMeta(

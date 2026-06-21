@@ -48,6 +48,9 @@ export interface SearchMeta {
   live: { active: boolean; sold: boolean };
   cached: boolean;
   notes: string[];
+  // Pagination over the ranked active pool (set per /search request, not cached):
+  activeTotal?: number;   // size of the full ranked active pool
+  hasMore?: boolean;      // true when active pages remain beyond the one returned
 }
 
 /** The single response shape for GET /search. Mirrors Swift `CardSearchResult` + `meta`. */

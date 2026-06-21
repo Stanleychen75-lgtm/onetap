@@ -10,15 +10,15 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("Marketplace", selection: $marketplace) {
+                    Picker("Currency", selection: $marketplace) {
                         ForEach(EbayMarketplace.allCases) { m in
-                            Text("\(m.flag)  \(m.displayName)").tag(m)
+                            Text(m.currency).tag(m)
                         }
                     }
                 } header: {
-                    Text("Marketplace & currency")
+                    Text("Pricing currency")
                 } footer: {
-                    Text("Prices show in the marketplace’s own currency — no conversion. Switching changes which eBay region’s listings you see.")
+                    Text("Choose the currency you want prices shown in. OneTap pulls listings from the matching eBay marketplace and shows the real listed amount — no conversion.")
                 }
 
                 Section("How OneTap works") {

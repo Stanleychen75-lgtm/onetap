@@ -97,7 +97,37 @@ struct Listing: Identifiable, Codable, Hashable {
     /// search for this exact title (sold filter for sold listings). We never fabricate
     /// a fake "item" link — a search is honest about what we can actually offer.
     var resolvedURL: URL? {
-        listingURL ?? Self.ebaySearchURL(query: title, sold: kind == .sold)
+        if let listingURL, Self.isSafeEbayURL(listingURL) { return listingURL }
+        return Self.ebaySearchURL(query: title, sold: kind == .sold)
+    }
+
+    /// The image to display, but only if it's HTTPS on an eBay image CDN — otherwise nil so the
+    /// view shows a placeholder. Stops a malicious/compromised backend from using the image slot
+    /// to load an arbitrary https host (e.g. a tracking/exfil beacon).
+    var safeImageURL: URL? {
+        guard let imageURL, Self.isSafeImageURL(imageURL) else { return nil }
+        return imageURL
+    }
+
+    /// Only follow a provider-supplied listing URL if it's HTTPS and on an eBay domain;
+    /// otherwise fall back to a safe eBay search. Guards against a malicious or compromised
+    /// backend handing us a phishing / non-eBay link to open when the user taps through.
+    static func isSafeEbayURL(_ url: URL) -> Bool {
+        isHTTPS(url, registrableDomains: ["ebay.com", "ebay.co.uk", "ebay.com.au", "ebay.ca", "ebay.de"])
+    }
+
+    /// eBay image CDNs (HTTPS only) — used to validate listing image URLs before loading them.
+    static func isSafeImageURL(_ url: URL) -> Bool {
+        isHTTPS(url, registrableDomains: ["ebayimg.com", "ebaystatic.com"])
+    }
+
+    /// True iff `url` is HTTPS and its host equals (or is a subdomain of) one of the allowed
+    /// registrable domains. "www." is ignored; the exact-or-dotted-suffix match rejects tricks
+    /// like "ebay.com.evil.com" or "notebay.com".
+    private static func isHTTPS(_ url: URL, registrableDomains: [String]) -> Bool {
+        guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else { return false }
+        let bare = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        return registrableDomains.contains { bare == $0 || bare.hasSuffix("." + $0) }
     }
 
     static func ebaySearchURL(query: String, sold: Bool) -> URL? {

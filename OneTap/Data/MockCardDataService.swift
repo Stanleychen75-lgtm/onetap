@@ -16,11 +16,13 @@ final class MockCardDataService: CardDataService {
         self.simulatedDelay = simulatedDelay
     }
 
-    func search(query: String) async throws -> CardSearchResult {
+    func search(query: String, page: Int) async throws -> CardSearchResult {
         try? await Task.sleep(for: simulatedDelay)
         guard let result = SampleCardIndex.shared.search(query) else {
             throw DataError.noResults
         }
+        // Sample data isn't paginated (it's a small curated set). Page 1 returns everything;
+        // its meta carries no `hasMore`, so the UI never offers "load more" in sample mode.
         return result
     }
 }

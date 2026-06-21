@@ -10,7 +10,9 @@ struct ListingDetailView: View {
     var averageSold: Double? = nil
     @Environment(\.openURL) private var openURL
 
-    private var hasRealListing: Bool { listing.listingURL != nil }
+    // Gate the "View on eBay" label on the SAME safety check the tap uses (resolvedURL), so the
+    // button can't claim a direct listing while actually falling back to a search.
+    private var hasRealListing: Bool { listing.listingURL.map(Listing.isSafeEbayURL) ?? false }
 
     /// How this listing's price compares to the average sold (monochrome, no hype).
     private var vsAverageText: (icon: String, text: String)? {
@@ -25,7 +27,7 @@ struct ListingDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Theme.Space.lg) {
-                AsyncCardImage(url: listing.imageURL, cornerRadius: Theme.Radius.md)
+                AsyncCardImage(url: listing.safeImageURL, cornerRadius: Theme.Radius.md)
                     .frame(width: 200, height: 280)
                     .padding(.top, Theme.Space.md)
 

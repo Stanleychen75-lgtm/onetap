@@ -149,8 +149,34 @@ struct ResultsView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                if viewModel.canLoadMore { loadMoreButton }
             }
         }
+    }
+
+    /// Simple "load more" control — pages in the next batch of active listings (up to the
+    /// backend's pool ceiling). Only shown when more results exist.
+    private var loadMoreButton: some View {
+        Button { Task { await viewModel.loadMore() } } label: {
+            HStack(spacing: 6) {
+                if viewModel.isLoadingMore {
+                    ProgressView()
+                } else {
+                    Image(systemName: "arrow.down.circle").font(.system(size: 14, weight: .semibold))
+                }
+                Text(viewModel.isLoadingMore ? "Loading…" : "Show more results")
+                    .font(.system(size: 15, weight: .semibold))
+            }
+            .foregroundStyle(Theme.accent)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Space.md)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.md, style: .continuous)
+                .strokeBorder(Theme.separator, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoadingMore)
+        .padding(.top, Theme.Space.xs)
     }
 
     private var emptyMessage: String {

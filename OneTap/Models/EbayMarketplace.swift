@@ -18,23 +18,15 @@ enum EbayMarketplace: String, CaseIterable, Identifiable, Hashable {
     /// Sent to the backend as the `marketplace` query param → eBay marketplace context.
     var apiID: String { rawValue }
 
-    var displayName: String {
+    /// User-facing label — CURRENCY only. The user is choosing which currency to see prices
+    /// in; which eBay marketplace backs it (e.g. EUR → eBay Germany) is an internal detail.
+    var currency: String {
         switch self {
-        case .us: return "United States · USD"
-        case .gb: return "United Kingdom · GBP"
-        case .au: return "Australia · AUD"
-        case .ca: return "Canada · CAD"
-        case .de: return "Germany · EUR"
-        }
-    }
-
-    var flag: String {
-        switch self {
-        case .us: return "🇺🇸"
-        case .gb: return "🇬🇧"
-        case .au: return "🇦🇺"
-        case .ca: return "🇨🇦"
-        case .de: return "🇩🇪"
+        case .us: return "USD"
+        case .gb: return "GBP"
+        case .au: return "AUD"
+        case .ca: return "CAD"
+        case .de: return "EUR"
         }
     }
 
