@@ -20,3 +20,8 @@ xcuserdata/
 
 # Local screenshots (remove this line if you want to commit them)
 screenshots/
+
+# Local secrets — the app's backend API key. NEVER commit this (the repo is public).
+# Copy Secrets.swift.example -> Secrets.swift and paste your key.
+OneTap/Data/Secrets.swift
+Secrets.swift

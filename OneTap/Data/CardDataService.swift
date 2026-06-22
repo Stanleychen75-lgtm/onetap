@@ -112,10 +112,12 @@ enum AppEnvironment {
         return !s.isEmpty && URL(string: s) != nil
     }
 
-    /// Shared secret sent to the backend as `Authorization: Bearer …`. Leave empty for an
-    /// unprotected local backend; set it to the backend's API_KEY before exposing publicly.
-    /// (Note: a key embedded in a shipped app is extractable — fine for dev, rotate for prod.)
-    static let backendAPIKey = ""
+    /// Shared secret sent to the backend as `Authorization: Bearer …` (must match the backend's
+    /// API_KEY). The actual value lives in `Secrets.swift`, which is **gitignored** so the key
+    /// never enters the repo — copy `Secrets.swift.example` → `Secrets.swift` and paste your key.
+    /// (A key shipped inside an app binary is still extractable, so treat it as a rotatable
+    /// throttle, not a true secret.)
+    static let backendAPIKey = Secrets.backendAPIKey
 
     static var isSampleMode: Bool { dataMode == .sample }
 
