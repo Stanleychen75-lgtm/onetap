@@ -1,6 +1,8 @@
 import SwiftUI
 import UIKit
 
+#if SCAN_ENABLED
+
 /// Minimal camera capture (UIImagePickerController). Library picking uses SwiftUI's
 /// PhotosPicker directly in SearchView, so this handles only the camera.
 struct CameraPicker: UIViewControllerRepresentable {
@@ -36,3 +38,5 @@ struct CameraPicker: UIViewControllerRepresentable {
         }
     }
 }
+
+#endif

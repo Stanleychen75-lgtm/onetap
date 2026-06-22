@@ -1,5 +1,7 @@
 import SwiftUI
 
+#if SCAN_ENABLED
+
 /// Honest Phase-1 review screen. Shows the cropped card and the TEXT we read from it,
 /// editable, then runs the normal card-fenced search. It never claims to have identified
 /// the exact card or variant — it's a faster way to start a text search.
@@ -106,3 +108,5 @@ struct ScanReviewView: View {
         .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).count < 2)
     }
 }
+
+#endif

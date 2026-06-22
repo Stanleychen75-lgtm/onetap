@@ -3,13 +3,24 @@ import { timingSafeEqual } from "node:crypto";
 import { config, isEbayConfigured } from "./config";
 import { runSearch } from "./searchService";
 
-const app = Fastify({ logger: true });
+// disableRequestLogging: do NOT log "?q=<user query>" + client IP on every request — that
+//   would be the only place user search data is persisted (privacy). Explicit req.log.error
+//   for failures still works.
+// trustProxy: when TRUST_PROXY=1 (set it on Render), rate-limit on the real client IP instead
+//   of the load balancer's, so the per-IP limiter actually distinguishes clients.
+const app = Fastify({
+  logger: true,
+  disableRequestLogging: true,
+  trustProxy: process.env.TRUST_PROXY === "1",
+});
 
 // ── Simple in-memory rate limit (fixed window / IP) — protects your eBay quota from
 //    abuse without a dependency. Swap for @fastify/rate-limit + Redis at real scale. ──
 const hits = new Map<string, { count: number; resetAt: number }>();
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+  // Opportunistic cleanup so one-off IPs can't grow this map without bound.
+  if (hits.size > 5000) for (const [k, v] of hits) if (v.resetAt < now) hits.delete(k);
   const entry = hits.get(ip);
   if (!entry || entry.resetAt < now) {
     hits.set(ip, { count: 1, resetAt: now + 60_000 });

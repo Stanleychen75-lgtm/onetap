@@ -1,23 +1,28 @@
 import SwiftUI
 import PhotosUI
 
-/// Home screen: a big search field, a "Scan a card" photo entry, curated examples, and recents.
-/// The single entry point into the app. The scanner reads a card's printed text on-device
-/// (OCR) to start a search — it does NOT identify the exact card or variant (that's a later
-/// phase, "Phase 2: visual re-ranking").
+/// Home screen: a big search field, curated examples, and recents — the single entry point
+/// into the app. (A photo-scan entry exists in DEBUG builds only; it's hidden from the v1
+/// release until its quality is ready. See the #if DEBUG block in the body.)
 struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     @State private var path = NavigationPath()
     @State private var showDebug = false
     @State private var showSettings = false
 
-    // Photo-scan flow (Phase 1: read text from a card photo on-device, then search).
+    // Photo-scan flow — HIDDEN for v1 via the SCAN_ENABLED compile flag, which is defined in
+    // NO build configuration. The whole scan subsystem (state, presentation, camera, review,
+    // OCR) is therefore compiled out of BOTH Debug and Release: no entry point, no reachable
+    // route, no scan/camera strings in any binary. To bring it back later, add SCAN_ENABLED to
+    // the target's "Active Compilation Conditions" (Build Settings). Code is preserved, not deleted.
+    #if SCAN_ENABLED
     @State private var showScanOptions = false
     @State private var showCamera = false
     @State private var showLibrary = false
     @State private var libraryItem: PhotosPickerItem?
     @State private var capturedImage: UIImage?   // temp holder while the camera dismisses
     @State private var scan: ScanImage?          // drives the review sheet
+    #endif
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -26,7 +31,11 @@ struct SearchView: View {
                     header
                     VStack(spacing: Theme.Space.md) {
                         SearchField(text: $viewModel.searchText, onSubmit: submit)
+                        // Scan entry point — hidden in ALL builds for v1 (SCAN_ENABLED is undefined,
+                        // so this compiles out everywhere). Flip SCAN_ENABLED on to restore it.
+                        #if SCAN_ENABLED
                         scanButton
+                        #endif
                     }
                     trendingSection
                     mostPopularSection
@@ -40,6 +49,7 @@ struct SearchView: View {
             .navigationDestination(for: SearchQuery.self) { query in
                 ResultsView(query: query.text)
             }
+            #if SCAN_ENABLED
             .confirmationDialog("Scan a card", isPresented: $showScanOptions, titleVisibility: .visible) {
                 if CameraPicker.isAvailable {
                     Button("Take Photo") { showCamera = true }
@@ -68,6 +78,7 @@ struct SearchView: View {
                     onRetake: { scan = nil; showScanOptions = true }
                 )
             }
+            #endif
         }
         .tint(Theme.accent)
     }
@@ -248,6 +259,7 @@ struct SearchView: View {
         path.append(query)
     }
 
+    #if SCAN_ENABLED
     private var scanButton: some View {
         Button { showScanOptions = true } label: {
             HStack(spacing: Theme.Space.sm) {
@@ -268,13 +280,17 @@ struct SearchView: View {
             scan = ScanImage(image: image)
         }
     }
+    #endif
 }
 
-/// Wrapper so a captured/picked image can drive an item-based review sheet.
+#if SCAN_ENABLED
+/// Wrapper so a captured/picked image can drive an item-based review sheet. (Scan is
+/// hidden in v1 via the SCAN_ENABLED flag — see SearchView.)
 private struct ScanImage: Identifiable {
     let id = UUID()
     let image: UIImage
 }
+#endif
 
 #Preview {
     SearchView()

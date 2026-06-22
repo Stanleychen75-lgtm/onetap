@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Minimal backend for the OneTap card price-check iOS app",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=20"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "fastify": "^4.28.1",
+    "fastify": "^5.8.3",
     "tsx": "^4.19.2"
   },
   "devDependencies": {

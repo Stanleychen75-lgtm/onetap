@@ -9,6 +9,7 @@ struct ListingDetailView: View {
     let listing: Listing
     var averageSold: Double? = nil
     @Environment(\.openURL) private var openURL
+    @State private var showZoom = false
 
     // Gate the "View on eBay" label on the SAME safety check the tap uses (resolvedURL), so the
     // button can't claim a direct listing while actually falling back to a search.
@@ -29,6 +30,19 @@ struct ListingDetailView: View {
             VStack(spacing: Theme.Space.lg) {
                 AsyncCardImage(url: listing.safeImageURL, cornerRadius: Theme.Radius.md)
                     .frame(width: 200, height: 280)
+                    .overlay(alignment: .bottomTrailing) {
+                        // Subtle "tap to zoom" affordance — only when there's a real photo.
+                        if listing.safeImageURL != nil {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(6)
+                                .background(.black.opacity(0.45), in: Circle())
+                                .padding(8)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture { if listing.safeImageURL != nil { showZoom = true } }
                     .padding(.top, Theme.Space.md)
 
                 VStack(spacing: Theme.Space.md) {
@@ -88,6 +102,9 @@ struct ListingDetailView: View {
         .background(Theme.background.ignoresSafeArea())
         .navigationTitle("Listing")
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showZoom) {
+            ZoomableImageView(url: listing.safeImageURL) { showZoom = false }
+        }
     }
 
     private var detailRows: some View {

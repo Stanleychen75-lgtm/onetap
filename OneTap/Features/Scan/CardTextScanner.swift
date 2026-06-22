@@ -2,6 +2,10 @@ import Vision
 import UIKit
 import CoreImage
 
+// Compiled when scan is enabled (SCAN_ENABLED) OR in DEBUG, because the DEBUG-only Phase 2
+// visual-rerank lab also uses this OCR helper. Out of Release entirely.
+#if SCAN_ENABLED || DEBUG
+
 /// On-device card TEXT reader (Apple Vision).
 ///
 /// HONESTY: this is NOT card identification or image matching. It detects/crops the card
@@ -116,3 +120,5 @@ enum CardTextScanner {
         }
     }
 }
+
+#endif

@@ -21,11 +21,17 @@ struct SettingsView: View {
                     Text("Choose the currency you want prices shown in. OneTap pulls listings from the matching eBay marketplace and shows the real listed amount — no conversion.")
                 }
 
-                Section("How OneTap works") {
+                Section {
+                    howItWorks("magnifyingglass", "Search",
+                               "Find any card by name or details and see what it's listed for.")
                     howItWorks("tag", "Live listings",
                                "What cards are listed for right now — straight from eBay.")
-                    howItWorks("checkmark.seal", "Sold comps",
-                               "Real sold prices live on eBay for now — tap “See sold comps on eBay” on any card. We never show estimated or sample prices as real.")
+                    howItWorks("checkmark.seal", "Sold prices — on eBay for now",
+                               "v1.0 focuses on live listings, so OneTap doesn't show in-app sold prices yet. Tap “See sold comps on eBay” on any card for real recent sales. In-app sold data may arrive in a later version if eBay grants the access it needs — we never show estimated or sample prices as real.")
+                } header: {
+                    Text("How OneTap works")
+                } footer: {
+                    Text("OneTap v1.0 focuses on search and live listing results. When we can't verify something (like sold prices), we send you to eBay rather than faking it.")
                 }
 
                 Section {
