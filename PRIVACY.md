@@ -1,6 +1,6 @@
 # OneTap — Privacy Policy
 
-**Last updated: [FILL IN DATE — e.g. June 16, 2026]**
+**Last updated: June 22, 2026**
 
 OneTap ("the app", "we", "us") is a trading-card price-checker for iPhone. This policy
 explains, in plain language, what information the app does and does not handle. We built
@@ -75,7 +75,7 @@ will update this policy and revise the "Last updated" date above. Material chang
 reflected here before the new version ships.
 
 ## 12. Contact
-Questions about this policy? Contact us at **[FILL IN — e.g. support@yourdomain.com]**.
+Questions about this policy? Contact us at **stanleyonetap@gmail.com**.
 
 ---
 

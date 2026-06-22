@@ -40,6 +40,10 @@ struct SettingsView: View {
                         Spacer()
                         Text(appVersion).foregroundStyle(Theme.textTertiary)
                     }
+                } footer: {
+                    Text("Made by Stanley Chen")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, Theme.Space.sm)
                 }
             }
             .scrollContentBackground(.hidden)
